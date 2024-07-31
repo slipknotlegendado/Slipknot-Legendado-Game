@@ -1,0 +1,290 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slipknot Legendado Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1c1c1c;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #333333;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        button {
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease, color 0.3s ease;
+        }
+        button.correct {
+            background-color: #2196F3;
+        }
+        button.wrong {
+            background-color: #e53935;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:focus {
+            outline: none;
+        }
+        .question-container {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .option {
+            background-color: #555555;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #888888;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease, color 0.3s ease;
+        }
+        .option:hover {
+            background-color: #777777;
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Slipknot Legendado Quiz</h1>
+        <div id="start-screen">
+            <p>Clique no botão abaixo para começar!</p>
+            <button id="start-button">Começar Jogo</button>
+        </div>
+
+        <div id="quiz-screen" class="hidden">
+            <div class="question-container" id="question-container"></div>
+            <div class="options-container" id="options-container"></div>
+            <div id="timer">Tempo restante: <span id="time-remaining">30</span> segundos</div>
+            <button id="next-button" class="hidden">Próxima Pergunta</button>
+        </div>
+
+        <div id="end-screen" class="hidden">
+            <h2>Parabéns! Você completou o quiz.</h2>
+            <p>Sua pontuação final: <span id="final-score"></span></p>
+            <button id="restart-button">Reiniciar Quiz</button>
+        </div>
+    </div>
+
+    <audio id="background-music" src="audio.mp3" loop></audio>
+
+    <script>
+        const quizData = [
+            {
+                question: "Qual é o nome do vocalista principal do Slipknot?",
+                options: ["Corey Taylor", "James Hetfield", "Jonathan Davis", "Dave Grohl"],
+                answer: "Corey Taylor"
+            },
+            {
+                question: "Qual é o nome do álbum lançado pelo Slipknot em 2019?",
+                options: ["Iowa", "Slipknot", "We Are Not Your Kind", "All Hope Is Gone"],
+                answer: "We Are Not Your Kind"
+            },
+            {
+                question: "Em que cidade o Slipknot foi formado?",
+                options: ["Des Moines", "Los Angeles", "New York City", "Seattle"],
+                answer: "Des Moines"
+            },
+            {
+                question: "Quantos membros oficiais o Slipknot tem atualmente?",
+                options: ["7", "8", "9", "10"],
+                answer: "9"
+            },
+            {
+                question: "Qual é o apelido dado ao mascote do Slipknot?",
+                options: ["Sic", "The Maggot", "The Heretic Anthem", "Vermilion"],
+                answer: "The Maggot"
+            },
+            {
+                question: "Quantos álbuns de estúdio o Slipknot lançou até agora?",
+                options: ["4", "5", "6", "7"],
+                answer: "6"
+            },
+            {
+                question: "Em que ano o Slipknot lançou o álbum 'Iowa'?",
+                options: ["2000", "2001", "2002", "2003"],
+                answer: "2001"
+            },
+            {
+                question: "Qual é o nome do baterista original do Slipknot e atual em 2024?",
+                options: ["Joey Jordison", "Shawn Crahan", "Chris Fehn", "Eloy Casagrande"],
+                answer: "Joey Jordison"
+            },
+            {
+                question: "Qual é o nome do festival de música fundado pelo Slipknot?",
+                options: ["Download Festival", "Ozzfest", "Mayhem Festival", "Knotfest"],
+                answer: "Knotfest"
+            },
+            {
+                question: "Qual é o nome do primeiro álbum do Slipknot?",
+                options: ["Iowa", "Slipknot", "Vol. 3: (The Subliminal Verses)", "All Hope Is Gone"],
+                answer: "Slipknot"
+            }
+        ];
+
+        const startButton = document.getElementById('start-button');
+        const nextButton = document.getElementById('next-button');
+        const restartButton = document.getElementById('restart-button');
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const endScreen = document.getElementById('end-screen');
+        const questionContainer = document.getElementById('question-container');
+        const optionsContainer = document.getElementById('options-container');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const timeRemainingDisplay = document.getElementById('time-remaining');
+        const backgroundMusic = document.getElementById('background-music');
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timeRemaining = 30;
+        let timer;
+
+        function startQuiz() {
+            startScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+            startTimer();
+            playBackgroundMusic(); // Inicia o áudio de fundo quando o jogo começar
+        }
+
+        function loadQuestion() {
+            resetOptions();
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionContainer.textContent = currentQuestion.question;
+            currentQuestion.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('option');
+                button.addEventListener('click', () => {
+                    checkAnswer(option, button);
+                });
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function checkAnswer(option, button) {
+            const currentQuestion = quizData[currentQuestionIndex];
+            if (option === currentQuestion.answer) {
+                button.classList.add('correct');
+                score++;
+            } else {
+                button.classList.add('wrong');
+            }
+            disableOptions();
+            showNextButton();
+        }
+
+        function disableOptions() {
+            const buttons = document.querySelectorAll('.option');
+            buttons.forEach(button => {
+                button.disabled = true;
+                if (!button.classList.contains('correct') && !button.classList.contains('wrong')) {
+                    button.classList.add('disabled');
+                }
+            });
+        }
+
+        function showNextButton() {
+            nextButton.classList.remove('hidden');
+        }
+
+        function startTimer() {
+            clearInterval(timer);
+            timeRemaining = 30;
+            timer = setInterval(() => {
+                timeRemaining--;
+                timeRemainingDisplay.textContent = timeRemaining;
+                if (timeRemaining <= 0) {
+                    endQuiz();
+                }
+            }, 1000);
+        }
+
+        function resetOptions() {
+            optionsContainer.innerHTML = '';
+        }
+
+        function nextQuestion() {
+            resetTimer();
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+                startTimer(); // Inicia o cronômetro para a próxima pergunta
+            } else {
+                endQuiz();
+            }
+            nextButton.classList.add('hidden');
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            timeRemaining = 30;
+            timeRemainingDisplay.textContent = timeRemaining;
+        }
+
+        function endQuiz() {
+            clearInterval(timer);
+            endScreen.classList.remove('hidden');
+            quizScreen.classList.add('hidden');
+            finalScoreDisplay.textContent = score;
+            stopBackgroundMusic(); // Para o áudio de fundo quando o quiz termina
+        }
+
+        function restartQuiz() {
+            clearInterval(timer);
+            currentQuestionIndex = 0;
+            score = 0;
+            timeRemaining = 30;
+            endScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+            startTimer();
+            playBackgroundMusic(); // Reinicia o áudio de fundo ao reiniciar o quiz
+        }
+
+        function playBackgroundMusic() {
+            backgroundMusic.play();
+        }
+
+        function stopBackgroundMusic() {
+            backgroundMusic.pause();
+            backgroundMusic.currentTime = 0;
+        }
+
+        startButton.addEventListener('click', startQuiz);
+        nextButton.addEventListener('click', nextQuestion);
+        restartButton.addEventListener('click', restartQuiz);
+    </script>
+</body>
+</html>
